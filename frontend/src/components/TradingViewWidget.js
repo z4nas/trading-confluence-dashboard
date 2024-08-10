@@ -1,0 +1,1 @@
+"import React from 'react';\nfunction TradingViewWidget() {\nreturn (\n<section>\n<h2>Trading View Widget</h2>\n{/* Add Trading View Widget Here */}\n</section>\n);\n}\nexport default TradingViewWidget;" 
