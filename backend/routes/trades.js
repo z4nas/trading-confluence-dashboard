@@ -2,24 +2,36 @@ const express = require('express');
 const router = express.Router();
 const Trade = require('../models/Trade');
 
+// Get all trades
 router.get('/', async (req, res) => {
-  const trades = await Trade.find().populate('asset');
-  res.json(trades);
+  try {
+    const trades = await Trade.find();
+    res.json(trades);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 });
 
+// Create a new trade
 router.post('/', async (req, res) => {
-  const trade = new Trade({
-    asset: req.body.asset,
-    price: req.body.price,
-    quantity: req.body.quantity
-  });
-  await trade.save();
-  res.json(trade);
+  const trade = new Trade(req.body);
+
+  try {
+    const newTrade = await trade.save();
+    res.status(201).json(newTrade);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 });
 
+// Delete a trade
 router.delete('/:id', async (req, res) => {
-  await Trade.findByIdAndDelete(req.params.id);
-  res.json({ message: 'Trade deleted' });
+  try {
+    await Trade.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Trade deleted' });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 });
 
 module.exports = router;
