@@ -14,6 +14,13 @@ router.post('/', async (req, res) => {
     res.json(indicator);
 });
 
+router.put('/:id', async (req, res) => {
+    const indicator = await Indicator.findByIdAndUpdate(req.params.id, req.body, {
+        new: true,
+    });
+    res.json(indicator);
+});
+
 router.delete('/:id', async (req, res) => {
     await Indicator.findByIdAndDelete(req.params.id);
     res.json({ message: 'Indicator deleted' });

@@ -17,6 +17,13 @@ router.post('/', async (req, res) => {
   res.json(trade);
 });
 
+router.put('/:id', async (req, res) => {
+  const trade = await Trade.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+  }).populate('asset');
+  res.json(trade);
+});
+
 router.delete('/:id', async (req, res) => {
   await Trade.findByIdAndDelete(req.params.id);
   res.json({ message: 'Trade deleted' });

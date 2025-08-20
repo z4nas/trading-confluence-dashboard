@@ -14,6 +14,13 @@ router.post('/', async (req, res) => {
     res.json(alert);
 });
 
+router.put('/:id', async (req, res) => {
+    const alert = await Alert.findByIdAndUpdate(req.params.id, req.body, {
+        new: true,
+    });
+    res.json(alert);
+});
+
 router.delete('/:id', async (req, res) => {
     await Alert.findByIdAndDelete(req.params.id);
     res.json({ message: 'Alert deleted' });

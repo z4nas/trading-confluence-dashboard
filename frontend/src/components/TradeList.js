@@ -6,6 +6,8 @@ const TradeList = () => {
   const [trades, setTrades] = useState([]);
   const [newTrade, setNewTrade] = useState({ asset: '', price: '', quantity: '' });
   const [assets, setAssets] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [editingTrade, setEditingTrade] = useState({ asset: '', price: '', quantity: '' });
 
   useEffect(() => {
     fetchTrades();
@@ -49,6 +51,30 @@ const TradeList = () => {
     }
   };
 
+  const startEdit = (trade) => {
+    setEditingId(trade._id);
+    setEditingTrade({
+      asset: trade.asset._id,
+      price: trade.price,
+      quantity: trade.quantity,
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingTrade({ asset: '', price: '', quantity: '' });
+  };
+
+  const updateTrade = async () => {
+    try {
+      const response = await axios.put(`/api/trades/${editingId}`, editingTrade);
+      setTrades(trades.map((trade) => (trade._id === editingId ? response.data : trade)));
+      cancelEdit();
+    } catch (error) {
+      console.error('Error updating trade:', error);
+    }
+  };
+
   return (
     <div>
       <h2>Trade List</h2>
@@ -78,8 +104,37 @@ const TradeList = () => {
       <ul>
         {trades.map((trade) => (
           <li key={trade._id}>
-            {trade.asset.name} - {trade.price} - {trade.quantity}
-            <Button onClick={() => deleteTrade(trade._id)}>Delete</Button>
+            {editingId === trade._id ? (
+              <>
+                <TextField
+                  select
+                  value={editingTrade.asset}
+                  onChange={(e) => setEditingTrade({ ...editingTrade, asset: e.target.value })}
+                >
+                  {assets.map((asset) => (
+                    <MenuItem key={asset._id} value={asset._id}>
+                      {asset.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  value={editingTrade.price}
+                  onChange={(e) => setEditingTrade({ ...editingTrade, price: e.target.value })}
+                />
+                <TextField
+                  value={editingTrade.quantity}
+                  onChange={(e) => setEditingTrade({ ...editingTrade, quantity: e.target.value })}
+                />
+                <Button onClick={updateTrade}>Save</Button>
+                <Button onClick={cancelEdit}>Cancel</Button>
+              </>
+            ) : (
+              <>
+                {trade.asset.name} - {trade.price} - {trade.quantity}
+                <Button onClick={() => startEdit(trade)}>Edit</Button>
+                <Button onClick={() => deleteTrade(trade._id)}>Delete</Button>
+              </>
+            )}
           </li>
         ))}
       </ul>

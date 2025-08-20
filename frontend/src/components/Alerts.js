@@ -3,12 +3,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { List, ListItem, ListItemText, IconButton, TextField, Button } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 function Alerts() {
     const [alerts, setAlerts] = useState([]);
     const [asset, setAsset] = useState('');
     const [condition, setCondition] = useState('');
     const [targetPrice, setTargetPrice] = useState('');
+    const [editingId, setEditingId] = useState(null);
+    const [editingAlert, setEditingAlert] = useState({ asset: '', condition: '', targetPrice: '' });
 
     const fetchAlerts = useCallback(async () => {
         try {
@@ -44,6 +49,30 @@ function Alerts() {
         }
     };
 
+    const startEdit = (alert) => {
+        setEditingId(alert._id);
+        setEditingAlert({
+            asset: alert.asset,
+            condition: alert.condition,
+            targetPrice: alert.targetPrice,
+        });
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        setEditingAlert({ asset: '', condition: '', targetPrice: '' });
+    };
+
+    const handleUpdateAlert = async () => {
+        try {
+            const response = await axios.put(`/api/alerts/${editingId}`, editingAlert);
+            setAlerts(alerts.map((alert) => (alert._id === editingId ? response.data : alert)));
+            cancelEdit();
+        } catch (error) {
+            console.error('Error updating alert:', error);
+        }
+    };
+
     return (
         <div>
             <h2>Alerts</h2>
@@ -76,12 +105,43 @@ function Alerts() {
             <List>
                 {alerts.map(alert => (
                     <ListItem key={alert._id}>
-                        <ListItemText
-                            primary={`${alert.asset} - ${alert.condition} - ${alert.targetPrice}`}
-                        />
-                        <IconButton edge="end" onClick={() => handleDeleteAlert(alert._id)}>
-                            <DeleteIcon />
-                        </IconButton>
+                        {editingId === alert._id ? (
+                            <>
+                                <TextField
+                                    value={editingAlert.asset}
+                                    onChange={e => setEditingAlert({ ...editingAlert, asset: e.target.value })}
+                                    margin="dense"
+                                />
+                                <TextField
+                                    value={editingAlert.condition}
+                                    onChange={e => setEditingAlert({ ...editingAlert, condition: e.target.value })}
+                                    margin="dense"
+                                />
+                                <TextField
+                                    value={editingAlert.targetPrice}
+                                    onChange={e => setEditingAlert({ ...editingAlert, targetPrice: e.target.value })}
+                                    margin="dense"
+                                />
+                                <IconButton edge="end" onClick={handleUpdateAlert}>
+                                    <SaveIcon />
+                                </IconButton>
+                                <IconButton edge="end" onClick={cancelEdit}>
+                                    <CancelIcon />
+                                </IconButton>
+                            </>
+                        ) : (
+                            <>
+                                <ListItemText
+                                    primary={`${alert.asset} - ${alert.condition} - ${alert.targetPrice}`}
+                                />
+                                <IconButton edge="end" onClick={() => startEdit(alert)}>
+                                    <EditIcon />
+                                </IconButton>
+                                <IconButton edge="end" onClick={() => handleDeleteAlert(alert._id)}>
+                                    <DeleteIcon />
+                                </IconButton>
+                            </>
+                        )}
                     </ListItem>
                 ))}
             </List>
