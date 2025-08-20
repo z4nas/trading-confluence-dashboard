@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, List, ListItem, ListItemText, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 import axios from 'axios';
 
 const AssetManager = () => {
   const [assets, setAssets] = useState([]);
   const [newAsset, setNewAsset] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [editingName, setEditingName] = useState('');
 
   useEffect(() => {
     fetchAssets();
@@ -39,6 +44,26 @@ const AssetManager = () => {
     }
   };
 
+  const startEdit = (asset) => {
+    setEditingId(asset._id);
+    setEditingName(asset.name);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingName('');
+  };
+
+  const updateAsset = async () => {
+    try {
+      const response = await axios.put(`/api/assets/${editingId}`, { name: editingName });
+      setAssets(assets.map((asset) => (asset._id === editingId ? response.data : asset)));
+      cancelEdit();
+    } catch (error) {
+      console.error('Error updating asset:', error);
+    }
+  };
+
   return (
     <div>
       <h2>Asset Manager</h2>
@@ -51,10 +76,30 @@ const AssetManager = () => {
       <List>
         {assets.map((asset) => (
           <ListItem key={asset._id}>
-            <ListItemText primary={asset.name} />
-            <IconButton edge="end" onClick={() => deleteAsset(asset._id)}>
-              <DeleteIcon />
-            </IconButton>
+            {editingId === asset._id ? (
+              <>
+                <TextField
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                />
+                <IconButton edge="end" onClick={updateAsset}>
+                  <SaveIcon />
+                </IconButton>
+                <IconButton edge="end" onClick={cancelEdit}>
+                  <CancelIcon />
+                </IconButton>
+              </>
+            ) : (
+              <>
+                <ListItemText primary={asset.name} />
+                <IconButton edge="end" onClick={() => startEdit(asset)}>
+                  <EditIcon />
+                </IconButton>
+                <IconButton edge="end" onClick={() => deleteAsset(asset._id)}>
+                  <DeleteIcon />
+                </IconButton>
+              </>
+            )}
           </ListItem>
         ))}
       </List>

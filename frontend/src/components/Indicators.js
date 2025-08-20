@@ -3,11 +3,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { List, ListItem, ListItemText, IconButton, TextField, Button } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 function Indicators() {
     const [indicators, setIndicators] = useState([]);
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
+    const [editingId, setEditingId] = useState(null);
+    const [editingIndicator, setEditingIndicator] = useState({ name: '', description: '' });
 
     const fetchIndicators = useCallback(async () => {
         try {
@@ -42,6 +47,26 @@ function Indicators() {
         }
     };
 
+    const startEdit = (indicator) => {
+        setEditingId(indicator._id);
+        setEditingIndicator({ name: indicator.name, description: indicator.description });
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        setEditingIndicator({ name: '', description: '' });
+    };
+
+    const handleUpdateIndicator = async () => {
+        try {
+            const response = await axios.put(`/api/indicators/${editingId}`, editingIndicator);
+            setIndicators(indicators.map((indicator) => (indicator._id === editingId ? response.data : indicator)));
+            cancelEdit();
+        } catch (error) {
+            console.error('Error updating indicator:', error);
+        }
+    };
+
     return (
         <div>
             <h2>Indicators</h2>
@@ -67,13 +92,39 @@ function Indicators() {
             <List>
                 {indicators.map(indicator => (
                     <ListItem key={indicator._id}>
-                        <ListItemText
-                            primary={indicator.name}
-                            secondary={indicator.description}
-                        />
-                        <IconButton edge="end" onClick={() => handleDeleteIndicator(indicator._id)}>
-                            <DeleteIcon />
-                        </IconButton>
+                        {editingId === indicator._id ? (
+                            <>
+                                <TextField
+                                    value={editingIndicator.name}
+                                    onChange={e => setEditingIndicator({ ...editingIndicator, name: e.target.value })}
+                                    margin="dense"
+                                />
+                                <TextField
+                                    value={editingIndicator.description}
+                                    onChange={e => setEditingIndicator({ ...editingIndicator, description: e.target.value })}
+                                    margin="dense"
+                                />
+                                <IconButton edge="end" onClick={handleUpdateIndicator}>
+                                    <SaveIcon />
+                                </IconButton>
+                                <IconButton edge="end" onClick={cancelEdit}>
+                                    <CancelIcon />
+                                </IconButton>
+                            </>
+                        ) : (
+                            <>
+                                <ListItemText
+                                    primary={indicator.name}
+                                    secondary={indicator.description}
+                                />
+                                <IconButton edge="end" onClick={() => startEdit(indicator)}>
+                                    <EditIcon />
+                                </IconButton>
+                                <IconButton edge="end" onClick={() => handleDeleteIndicator(indicator._id)}>
+                                    <DeleteIcon />
+                                </IconButton>
+                            </>
+                        )}
                     </ListItem>
                 ))}
             </List>
